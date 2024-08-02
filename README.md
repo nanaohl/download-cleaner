@@ -70,7 +70,7 @@ Install PM2 Globally
 
 `npm install pm2@latest -g`
 
-From the root folders
+From the root diretory of this project
 
 `npm i`
 
@@ -82,6 +82,5 @@ Set PM2 to run on start up
 
 `pm2 save`
 
-Enjoy
-
+Enjoy 
 
