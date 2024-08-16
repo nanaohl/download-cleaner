@@ -58,7 +58,6 @@ const folders = {
     '.html': 'HTML Files',
     '.css': 'CSS Files',
     '.js': 'JavaScript Files',
-    '.zip': 'ZIP Archives',
     '.rar': 'RAR Archives',
     '.exe': 'Executable Files',
     '.dmg': 'Disk Images',
@@ -99,7 +98,8 @@ const folders = {
     '.bak': 'Backup Files',
     '.tmp': 'Temporary Files',
     '.saver': 'Screensavers',
-    '.hex': 'Keyboard Config'
+    '.hex': 'Keyboard Config',
+    '.ics': 'Calenders'
 };
 
 // Define the archive folder
