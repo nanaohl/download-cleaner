@@ -17,6 +17,7 @@ const folders = {
     '.jpeg': 'Image Files',
     '.webp': 'Image Files',
     '.svg': 'Image Files',
+    '.HEIC': 'Image Files',
     '.doc': 'Word Documents',
     '.mov': 'Videos',
     '.mp4': 'Videos',
