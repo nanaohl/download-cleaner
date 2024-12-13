@@ -63,6 +63,7 @@ const folders = {
     '.sketch': 'design',
     '.fig': 'design',
     '.pdf': 'docs',
+    '.PDF': 'docs',
     '.doc': 'docs',
     '.docx': 'docs',
     '.xls': 'data',
