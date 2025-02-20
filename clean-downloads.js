@@ -17,7 +17,7 @@ const config = {
         audio: ['.mp3', '.wav', '.aac', '.flac', '.m4a'],
         archives: ['.zip', '.rar', '.7z', '.tar', '.gz'],
         applications: ['.exe', '.dmg', '.pkg', '.deb', '.appimage', '.msi'],
-        code: ['.js', '.py', '.java', '.cpp', '.h', '.css', '.html', '.php', '.rb'],
+        code: ['.js', '.tsx', '.py', '.java', '.cpp', '.h', '.css', '.html', '.php', '.rb'],
         data: ['.csv', '.xls', '.xlsx', '.json', '.xml', '.yaml'],
         databases: ['.sql', '.db', '.sqlite', '.sqlite3'],
         design: ['.ai', '.psd', '.sketch', '.fig', '.xd'],
