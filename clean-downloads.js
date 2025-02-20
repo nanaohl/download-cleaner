@@ -65,9 +65,11 @@ const folders = {
     '.pdf': 'docs',
     '.PDF': 'docs',
     '.doc': 'docs',
+    '.rtf': 'docs',
     '.docx': 'docs',
     '.xls': 'data',
-    '.xlsx': 'data'
+    '.xlsx': 'data',
+    '.saver': 'screensavers'
 };
 
 
