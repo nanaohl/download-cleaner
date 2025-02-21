@@ -17,7 +17,7 @@ const config = {
         audio: ['.mp3', '.wav', '.aac', '.flac', '.m4a'],
         archives: ['.zip', '.rar', '.7z', '.tar', '.gz'],
         applications: ['.exe', '.dmg', '.pkg', '.deb', '.appimage', '.msi'],
-        code: ['.js', '.tsx', '.py', '.java', '.cpp', '.h', '.css', '.html', '.php', '.rb'],
+        code: ['.js','.tsx', '.py', '.java', '.cpp', '.h', '.css', '.html', '.php', '.rb'],
         data: ['.csv', '.xls', '.xlsx', '.json', '.xml', '.yaml'],
         databases: ['.sql', '.db', '.sqlite', '.sqlite3'],
         design: ['.ai', '.psd', '.sketch', '.fig', '.xd'],
@@ -49,6 +49,7 @@ class DownloadsOrganizer {
         this.downloadFolder = path.join(config.homeDirectory, 'Downloads');
         this.archiveFolder = path.join(this.downloadFolder, '_Archive');
         this.extensionMap = this.buildExtensionMap();
+        this.knownFiles = new Set(); // Track files we've already processed
     }
 
     buildExtensionMap() {
@@ -63,12 +64,24 @@ class DownloadsOrganizer {
         try {
             await this.ensureDirectoryExists(this.archiveFolder);
             await this.ensureDirectoriesExist();
+            await this.loadExistingFiles(); // Load existing files before starting watcher
             this.startWatcher();
             await this.organizeFiles();
             logger.info('Downloads organizer initialized successfully');
         } catch (error) {
             logger.error('Failed to initialize downloads organizer', { error });
             throw error;
+        }
+    }
+
+    async loadExistingFiles() {
+        const files = await fs.readdir(this.downloadFolder);
+        for (const file of files) {
+            const filePath = path.join(this.downloadFolder, file);
+            const stats = await fs.stat(filePath);
+            if (stats.isFile()) {
+                this.knownFiles.add(filePath);
+            }
         }
     }
 
@@ -89,13 +102,15 @@ class DownloadsOrganizer {
     }
 
     startWatcher() {
+        // Only watch the Downloads folder directly, not its subdirectories
         const watcher = chokidar.watch(this.downloadFolder, {
+            depth: 0, // Only watch the immediate directory
             ignored: (filePath) => {
                 const basename = path.basename(filePath);
                 return config.ignorePatterns.some(pattern => {
                     const regex = new RegExp(pattern);
                     return regex.test(basename);
-                });
+                }) || !fsSync.statSync(filePath).isFile(); // Ignore directories
             },
             persistent: true,
             ignoreInitial: true,
@@ -107,8 +122,11 @@ class DownloadsOrganizer {
 
         watcher
             .on('add', async filePath => {
-                logger.info(`New file detected: ${filePath}`);
-                await this.handleFile(filePath);
+                if (!this.knownFiles.has(filePath)) {
+                    logger.info(`New file detected: ${filePath}`);
+                    this.knownFiles.add(filePath);
+                    await this.handleFile(filePath);
+                }
             })
             .on('error', error => {
                 logger.error('Watcher error', { error });
@@ -119,6 +137,11 @@ class DownloadsOrganizer {
 
     async handleFile(filePath) {
         try {
+            // Skip if file no longer exists or is in a subdirectory
+            if (!fsSync.existsSync(filePath) || path.dirname(filePath) !== this.downloadFolder) {
+                return;
+            }
+
             const stats = await fs.stat(filePath);
             const fileAge = Date.now() - stats.mtime.getTime();
             const shouldArchive = fileAge > config.archiveDays * 24 * 60 * 60 * 1000;
@@ -143,21 +166,20 @@ class DownloadsOrganizer {
     async moveFile(sourcePath, targetDir) {
         try {
             const filename = path.basename(sourcePath);
-            const targetPath = path.join(targetDir, filename);
+            let targetPath = path.join(targetDir, filename);
             
             // Handle file name conflicts
-            let finalPath = targetPath;
-            let counter = 1;
-            
-            while (fsSync.existsSync(finalPath)) {
+            if (fsSync.existsSync(targetPath)) {
                 const ext = path.extname(filename);
                 const nameWithoutExt = path.basename(filename, ext);
-                finalPath = path.join(targetDir, `${nameWithoutExt}_${counter}${ext}`);
-                counter++;
+                const timestamp = Date.now();
+                targetPath = path.join(targetDir, `${nameWithoutExt}_${timestamp}${ext}`);
             }
 
-            await fs.rename(sourcePath, finalPath);
-            logger.info(`Moved file: ${sourcePath} → ${finalPath}`);
+            await fs.rename(sourcePath, targetPath);
+            this.knownFiles.delete(sourcePath);
+            this.knownFiles.add(targetPath);
+            logger.info(`Moved file: ${sourcePath} → ${targetPath}`);
         } catch (error) {
             logger.error('Error moving file', { sourcePath, targetDir, error });
             throw error;
@@ -172,7 +194,7 @@ class DownloadsOrganizer {
                 const filePath = path.join(this.downloadFolder, filename);
                 const stats = await fs.stat(filePath);
                 
-                if (stats.isFile()) {
+                if (stats.isFile() && path.dirname(filePath) === this.downloadFolder) {
                     await this.handleFile(filePath);
                 }
             }
